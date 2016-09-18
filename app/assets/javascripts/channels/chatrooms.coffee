@@ -8,13 +8,23 @@ App.chatrooms = App.cable.subscriptions.create "ChatroomsChannel",
   received: (data) ->
     # Called when there's incoming data on the websocket for this channel
     active_chatroom = $("[data-behavior='messages'][data-chatroom-id='#{data.chatroom_id}']")
+    active_chatroom = $("[data-behavior='messages'][data-chatroom-id='#{data.chatroom_id}']")
     if active_chatroom.length > 0
+
+      if document.hidden
+        if $(".strike").length == 0
+          active_chatroom.append("<div class='strike'><span>Unread Messages</span></div>")
+
+        if Notification.permission == "granted"
+          new Notification(data.username, {body: data.body})
+
+      else
+        App.last_read.update(data.chatroom_id)
+
+      # Insert the message
       active_chatroom.append("<div><strong>#{data.username}:</strong> #{data.body}</div>")
 
-      if document.hidden && Notification.permission == "granted"
-        new Notification(data.username, { body: data.body})
     else
       $("[data-behavior='chatroom-link'][data-chatroom-id='#{data.chatroom_id}']").css("font-weight", "bold")
-
   send_message: (chatroom_id, message) ->
     @perform "send_message", { chatroom_id: chatroom_id, body: message}
